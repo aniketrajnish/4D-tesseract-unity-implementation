@@ -3,11 +3,17 @@ using UnityEngine;
 public class Tesseract : MonoBehaviour
 {
     [SerializeField] float rot_speed;
+    [SerializeField] GameObject[] spheres;
+    [SerializeField] public Material line_mat;
+    [SerializeField] GameObject mesh_generator;
+
     float theta = 0;
     float[][] coordinates = new float[16][];
     float[][] final_coordinates = new float[16][];
-    [SerializeField] GameObject[] spheres;
-    [SerializeField] public Material line_mat;
+
+    Mesh mesh;
+    int[] triangles;
+    Vector3[] vertices;
     private void Start()
     {
         coordinates[0] = new float[] { -1, -1, -1, 1 };
@@ -26,6 +32,9 @@ public class Tesseract : MonoBehaviour
         coordinates[13] = new float[] { 1, -1, 1, -1 };
         coordinates[14] = new float[] { 1, 1, 1, -1 };
         coordinates[15] = new float[] { -1, 1, 1, -1 };
+
+        mesh = new Mesh();
+        mesh_generator.GetComponent<MeshFilter>().mesh = mesh;
     }
 
     float cam_dist = 2;
@@ -64,10 +73,20 @@ public class Tesseract : MonoBehaviour
 
             final_coordinates[i] = proj_temp;
 
-            spheres[i].transform.position = new Vector3(proj_temp[0], proj_temp[1], proj_temp[2]);          
-        }        
+            spheres[i].transform.position = new Vector3(proj_temp[0], proj_temp[1], proj_temp[2]);
+        }
+
+        /*for (int i = 0; i < 16; i += 4)
+        {
+            Vector3 coor_a = new Vector3(final_coordinates[i][0], final_coordinates[i][1], final_coordinates[i][2]);
+            Vector3 coor_b = new Vector3(final_coordinates[i+1][0], final_coordinates[i+1][1], final_coordinates[i+1][2]);
+            Vector3 coor_c = new Vector3(final_coordinates[i+2][0], final_coordinates[i+2][1], final_coordinates[i+2][2]);
+            Vector3 coor_d = new Vector3(final_coordinates[i+3][0], final_coordinates[i+3][1], final_coordinates[i+3][2]);
+            //DrawFaces(coor_a, coor_b, coor_c, coor_d);
+        }*/
+        DrawFaces();
     }
-    
+
     void DrawEdge(int offset, int i, int j)
     {
         GL.Begin(GL.LINES);
@@ -79,7 +98,7 @@ public class Tesseract : MonoBehaviour
 
         GL.Vertex3(start.x, start.y, start.z);
         GL.Vertex3(end.x, end.y, end.z);
-               
+
         //Debug.DrawLine(start, end, Color.red);
     }
 
@@ -103,6 +122,88 @@ public class Tesseract : MonoBehaviour
             GL.End();
         }
 
+    }
+
+    void DrawFaces()
+    {
+        vertices = new Vector3[16];
+
+        for (int i = 0; i < 16; i++)
+        {
+            Vector3 coor_i = new Vector3(final_coordinates[i][0], final_coordinates[i][1], final_coordinates[i][2]);
+            vertices[i] = coor_i;
+        }
+
+        /*triangles = new int[78];
+
+        int j = 0;
+        for (int i = 0; i < 13; i++)
+        {
+            triangles[j] = i;
+            triangles[j + 1] = i + 1;
+            triangles[j + 2] = i + 2;
+            triangles[j + 3] = i + 2;
+            triangles[j + 4] = i + 3;
+            triangles[j + 5] = i;
+
+            j += 6;
+        }*/
+
+        triangles = new int[] 
+        { 
+            6, 14, 13,
+            13, 5, 6,
+            6, 2, 1,
+            1, 5, 6,
+            6, 7, 4,
+            4, 5, 6,
+            6, 2, 10,
+            10, 14, 6,
+            6, 14, 15,
+            15, 7, 6,
+            6, 2, 3,
+            3, 7, 6,
+            14, 10, 13,
+            13, 9, 14,
+            14, 15, 12, 
+            12, 13, 14,
+            14, 15, 11,
+            11, 10, 14,
+            2, 10, 9,
+            1, 2, 10,
+            11, 3, 2,
+            2, 10, 11,
+            2, 3, 0,
+            0, 1, 2,
+            10, 11, 8,
+            8, 9, 10,
+            5, 4, 12,
+            12, 13, 5,
+            5, 1, 0,
+            0, 4, 5,
+            5, 1, 9,
+            9, 13, 5,
+            13, 9, 8,
+            8, 12, 13,
+            9, 1, 0,
+            0, 8, 9,
+            7, 3, 0,
+            0, 4, 7,
+            7, 15, 12,
+            12, 4, 7,
+            15, 7, 3, 
+            3, 11, 15,
+            15, 11, 8,
+            8, 12, 15,
+            3, 11, 8,
+            8, 5, 3
+        };
+
+        mesh.Clear();
+
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
     }
 
     float[] matrix_multiplication_4d(float[][] mat_1, float[][] mat_2)
